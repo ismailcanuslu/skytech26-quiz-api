@@ -1,0 +1,32 @@
+# Build artifacts
+bin/
+obj/
+
+# .NET user files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE folders
+.idea/
+.vs/
+.vscode/
+
+# OS files
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Node artifacts (if any frontend tooling exists)
+node_modules/
+
+# Coverage / test artifacts
+TestResults/
+coverage/

@@ -9,3 +9,4 @@
 /Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Domain/obj/Debug/net10.0/refint/Kahoot.Backend.Domain.dll
 /Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Domain/obj/Debug/net10.0/Kahoot.Backend.Domain.pdb
 /Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Domain/obj/Debug/net10.0/ref/Kahoot.Backend.Domain.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Domain/obj/Debug/net10.0/Kahoot.Backend.Domain.sourcelink.json
