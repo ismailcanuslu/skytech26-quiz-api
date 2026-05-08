@@ -9,6 +9,7 @@ public sealed class NextQuestionEvent
     public required string Text { get; init; }
     public required int TimeLimit { get; init; }
     public required int Points { get; init; }
+    public required DateTime StartedAtUtc { get; init; }
     public required IReadOnlyList<NextQuestionOptionEvent> Options { get; init; }
 }
 

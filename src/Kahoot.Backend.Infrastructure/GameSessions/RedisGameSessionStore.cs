@@ -21,6 +21,7 @@ internal sealed class RedisGameSessionStore(IConnectionMultiplexer redis) : IGam
             new HashEntry("status", "WaitingForPlayers"),
             new HashEntry("quizId", quizId.ToString()),
             new HashEntry("currentQuestionIndex", -1),
+            new HashEntry("currentQuestionStartedAtUtc", string.Empty),
             new HashEntry("createdAtUtc", DateTime.UtcNow.ToString("O"))
         });
         await _database.KeyExpireAsync(metaKey, SessionTtl);
@@ -62,7 +63,7 @@ internal sealed class RedisGameSessionStore(IConnectionMultiplexer redis) : IGam
     public async Task<GameSessionMeta?> GetSessionMetaAsync(string gamePin, CancellationToken cancellationToken = default)
     {
         var metaKey = GetSessionMetaKey(gamePin);
-        var values = await _database.HashGetAsync(metaKey, ["quizId", "currentQuestionIndex", "status"]);
+        var values = await _database.HashGetAsync(metaKey, ["quizId", "currentQuestionIndex", "status", "currentQuestionStartedAtUtc"]);
         if (values[0].IsNullOrEmpty || values[1].IsNullOrEmpty)
         {
             return null;
@@ -82,13 +83,25 @@ internal sealed class RedisGameSessionStore(IConnectionMultiplexer redis) : IGam
         {
             QuizId = quizId,
             CurrentQuestionIndex = currentQuestionIndex,
-            Status = values[2].ToString() ?? "WaitingForPlayers"
+            Status = values[2].ToString() ?? "WaitingForPlayers",
+            CurrentQuestionStartedAtUtc = DateTime.TryParse(values[3].ToString(), out var startedAtUtc)
+                ? startedAtUtc
+                : null
         };
     }
 
     public async Task SetCurrentQuestionIndexAsync(string gamePin, int questionIndex, CancellationToken cancellationToken = default)
     {
         await _database.HashSetAsync(GetSessionMetaKey(gamePin), "currentQuestionIndex", questionIndex);
+    }
+
+    public async Task SetCurrentQuestionStartedAtUtcAsync(string gamePin, DateTime startedAtUtc, CancellationToken cancellationToken = default)
+    {
+        await _database.HashSetAsync(
+            GetSessionMetaKey(gamePin),
+            "currentQuestionStartedAtUtc",
+            startedAtUtc.ToString("O")
+        );
     }
 
     public async Task SetStatusAsync(string gamePin, string status, CancellationToken cancellationToken = default)
@@ -187,10 +200,86 @@ internal sealed class RedisGameSessionStore(IConnectionMultiplexer redis) : IGam
         return (int)await _database.HashLengthAsync(GetSessionPlayersKey(gamePin));
     }
 
+    public async Task<IReadOnlyList<string>> GetPlayersAsync(string gamePin, CancellationToken cancellationToken = default)
+    {
+        var entries = await _database.HashGetAllAsync(GetSessionPlayersKey(gamePin));
+        var players = new List<(string Nickname, DateTime JoinedAtUtc)>(entries.Length);
+
+        foreach (var entry in entries)
+        {
+            var parts = entry.Value.ToString().Split('|', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0 || string.IsNullOrWhiteSpace(parts[0]))
+            {
+                continue;
+            }
+
+            var joinedAtUtc = DateTime.MinValue;
+            if (parts.Length > 1 && DateTime.TryParse(parts[1], out var parsed))
+            {
+                joinedAtUtc = parsed;
+            }
+
+            players.Add((parts[0], joinedAtUtc));
+        }
+
+        return players
+            .OrderBy(x => x.JoinedAtUtc)
+            .Select(x => x.Nickname)
+            .ToList();
+    }
+
+    public async Task<bool> IsPlayerBannedAsync(string gamePin, string nickname, CancellationToken cancellationToken = default)
+    {
+        var normalizedNickname = nickname.Trim().ToLowerInvariant();
+        return await _database.SetContainsAsync(GetBannedNicknamesKey(gamePin), normalizedNickname);
+    }
+
+    public async Task<bool> BanPlayerAsync(string gamePin, string nickname, CancellationToken cancellationToken = default)
+    {
+        var normalizedNickname = nickname.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedNickname))
+        {
+            return false;
+        }
+
+        var playersKey = GetSessionPlayersKey(gamePin);
+        var nicknamesKey = GetSessionNicknamesKey(gamePin);
+        var bannedKey = GetBannedNicknamesKey(gamePin);
+
+        var entries = await _database.HashGetAllAsync(playersKey);
+        string? targetSessionId = null;
+
+        foreach (var entry in entries)
+        {
+            var parts = entry.Value.ToString().Split('|', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) continue;
+            if (parts[0].Trim().ToLowerInvariant() == normalizedNickname)
+            {
+                targetSessionId = entry.Name.ToString();
+                break;
+            }
+        }
+
+        var removed = false;
+        if (!string.IsNullOrWhiteSpace(targetSessionId))
+        {
+            removed = await _database.HashDeleteAsync(playersKey, targetSessionId);
+            await _database.SetRemoveAsync(nicknamesKey, normalizedNickname);
+            await _database.KeyExpireAsync(playersKey, SessionTtl);
+            await _database.KeyExpireAsync(nicknamesKey, SessionTtl);
+        }
+
+        await _database.SetAddAsync(bannedKey, normalizedNickname);
+        await _database.KeyExpireAsync(bannedKey, SessionTtl);
+
+        return removed;
+    }
+
     private static string GetSessionMetaKey(string gamePin) => $"game:{gamePin}:meta";
     private static string GetSessionNicknamesKey(string gamePin) => $"game:{gamePin}:nicknames";
     private static string GetSessionPlayersKey(string gamePin) => $"game:{gamePin}:players";
     private static string GetQuestionAnswersKey(string gamePin, Guid questionId) => $"game:{gamePin}:question:{questionId:D}:answers";
     private static string GetLeaderboardKey(string gamePin) => $"game:{gamePin}:leaderboard";
     private static string GetLeaderboardNicknameKey(string gamePin) => $"game:{gamePin}:leaderboard:nicknames";
+    private static string GetBannedNicknamesKey(string gamePin) => $"game:{gamePin}:banned_nicknames";
 }

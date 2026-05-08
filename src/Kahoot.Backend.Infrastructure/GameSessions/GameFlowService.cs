@@ -17,7 +17,8 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
         var questions = await dbContext.Questions
             .AsNoTracking()
             .Where(x => x.QuizId == meta.QuizId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Id)
             .Select(x => new
             {
                 x.Id,
@@ -39,6 +40,8 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
         }
 
         await gameSessionStore.SetCurrentQuestionIndexAsync(gamePin, nextIndex, cancellationToken);
+        var startedAtUtc = DateTime.UtcNow;
+        await gameSessionStore.SetCurrentQuestionStartedAtUtcAsync(gamePin, startedAtUtc, cancellationToken);
         await gameSessionStore.SetStatusAsync(gamePin, "QuestionActive", cancellationToken);
 
         return new NextQuestionResult
@@ -50,6 +53,7 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
             Text = question.Text,
             TimeLimit = question.TimeLimit,
             Points = question.Points,
+            StartedAtUtc = startedAtUtc,
             Options = question.Options.Select(x => new QuestionOptionResult
             {
                 Id = x.Id,
@@ -69,7 +73,8 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
         var currentQuestion = await dbContext.Questions
             .AsNoTracking()
             .Where(x => x.QuizId == meta.QuizId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Id)
             .Skip(meta.CurrentQuestionIndex)
             .Take(1)
             .Select(x => new
@@ -114,7 +119,8 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
         var currentQuestion = await dbContext.Questions
             .AsNoTracking()
             .Where(x => x.QuizId == meta.QuizId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Id)
             .Skip(meta.CurrentQuestionIndex)
             .Take(1)
             .Select(x => new
@@ -173,7 +179,8 @@ internal sealed class GameFlowService(KahootDbContext dbContext, IGameSessionSto
         var questions = await dbContext.Questions
             .AsNoTracking()
             .Where(x => x.QuizId == meta.QuizId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Id)
             .Select(x => new
             {
                 x.Id,

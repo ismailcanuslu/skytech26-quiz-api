@@ -3,6 +3,7 @@ using System;
 using Kahoot.Backend.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kahoot.Backend.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(KahootDbContext))]
-    partial class KahootDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508190809_SyncSnapshotAfterQuestionOrder")]
+    partial class SyncSnapshotAfterQuestionOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

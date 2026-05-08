@@ -49,10 +49,12 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
                 CreatedAt = x.CreatedAt,
                 IsActive = x.IsActive,
                 Questions = x.Questions
-                    .OrderBy(q => q.Id)
+                    .OrderBy(q => q.Order)
+                    .ThenBy(q => q.Id)
                     .Select(q => new QuestionResponse
                     {
                         Id = q.Id,
+                        Order = q.Order,
                         Text = q.Text,
                         TimeLimit = q.TimeLimit,
                         Points = q.Points,
@@ -180,6 +182,9 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
         {
             Id = Guid.NewGuid(),
             QuizId = id,
+            Order = (await dbContext.Questions
+                .Where(x => x.QuizId == id)
+                .MaxAsync(x => (int?)x.Order, cancellationToken) ?? -1) + 1,
             Text = request.Text.Trim(),
             TimeLimit = request.TimeLimit,
             Points = request.Points,
@@ -197,6 +202,7 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
         return CreatedAtAction(nameof(GetById), new { id }, new QuestionResponse
         {
             Id = question.Id,
+            Order = question.Order,
             Text = question.Text,
             TimeLimit = question.TimeLimit,
             Points = question.Points,
@@ -238,36 +244,28 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
         question.TimeLimit = request.TimeLimit;
         question.Points = request.Points;
 
-        var incomingIds = request.AnswerOptions.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
+        var incomingIds = request.AnswerOptions.Select(x => x.Id).ToHashSet();
+        if (incomingIds.Count != request.AnswerOptions.Count || incomingIds.Count != question.AnswerOptions.Count)
+        {
+            return BadRequest("Answer option ids must match existing options exactly.");
+        }
+
         var removable = question.AnswerOptions.Where(x => !incomingIds.Contains(x.Id)).ToList();
         if (removable.Count > 0)
         {
-            dbContext.AnswerOptions.RemoveRange(removable);
+            return BadRequest("Answer option ids must match existing options exactly.");
         }
 
         foreach (var option in request.AnswerOptions)
         {
-            if (option.Id.HasValue)
+            var existing = question.AnswerOptions.FirstOrDefault(x => x.Id == option.Id);
+            if (existing is null)
             {
-                var existing = question.AnswerOptions.FirstOrDefault(x => x.Id == option.Id.Value);
-                if (existing is null)
-                {
-                    return BadRequest($"Answer option '{option.Id.Value}' does not belong to question.");
-                }
+                return BadRequest($"Answer option '{option.Id}' does not belong to question.");
+            }
 
-                existing.Text = option.Text.Trim();
-                existing.IsCorrect = option.IsCorrect;
-            }
-            else
-            {
-                question.AnswerOptions.Add(new AnswerOption
-                {
-                    Id = Guid.NewGuid(),
-                    QuestionId = question.Id,
-                    Text = option.Text.Trim(),
-                    IsCorrect = option.IsCorrect
-                });
-            }
+            existing.Text = option.Text.Trim();
+            existing.IsCorrect = option.IsCorrect;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -275,6 +273,7 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
         return Ok(new QuestionResponse
         {
             Id = question.Id,
+            Order = question.Order,
             Text = question.Text,
             TimeLimit = question.TimeLimit,
             Points = question.Points,
@@ -302,6 +301,51 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
         }
 
         dbContext.Questions.Remove(question);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/questions/reorder")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReorderQuestions(
+        [FromRoute] Guid id,
+        [FromBody] ReorderQuestionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var quiz = await dbContext.Quizzes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (quiz is null)
+        {
+            return NotFound();
+        }
+
+        var questions = await dbContext.Questions
+            .Where(x => x.QuizId == id)
+            .ToListAsync(cancellationToken);
+
+        if (request.QuestionIds.Count != questions.Count)
+        {
+            return BadRequest("QuestionIds count must match quiz questions count.");
+        }
+
+        var existingIds = questions.Select(x => x.Id).ToHashSet();
+        if (!request.QuestionIds.All(existingIds.Contains) || request.QuestionIds.Distinct().Count() != request.QuestionIds.Count)
+        {
+            return BadRequest("QuestionIds must include each quiz question exactly once.");
+        }
+
+        var orderById = request.QuestionIds
+            .Select((questionId, index) => new { questionId, index })
+            .ToDictionary(x => x.questionId, x => x.index);
+
+        foreach (var question in questions)
+        {
+            question.Order = orderById[question.Id];
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -346,10 +390,12 @@ public sealed class AdminQuizzesController(KahootDbContext dbContext) : Controll
             CreatedAt = quiz.CreatedAt,
             IsActive = quiz.IsActive,
             Questions = quiz.Questions
-                .OrderBy(x => x.Id)
+                .OrderBy(x => x.Order)
+                .ThenBy(x => x.Id)
                 .Select(q => new QuestionResponse
                 {
                     Id = q.Id,
+                    Order = q.Order,
                     Text = q.Text,
                     TimeLimit = q.TimeLimit,
                     Points = q.Points,

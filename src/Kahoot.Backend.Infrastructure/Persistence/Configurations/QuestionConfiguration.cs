@@ -22,9 +22,14 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.Property(x => x.Points)
             .IsRequired();
 
+        builder.Property(x => x.Order)
+            .IsRequired();
+
         builder.HasOne(x => x.Quiz)
             .WithMany(x => x.Questions)
             .HasForeignKey(x => x.QuizId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.QuizId, x.Order });
     }
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Backend.Api.Middlewares;
 
@@ -17,14 +18,22 @@ public sealed class GlobalExceptionHandlingMiddleware(RequestDelegate next, ILog
         {
             logger.LogError(exception, "Unhandled exception caught by middleware.");
 
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            var statusCode = exception is DbUpdateConcurrencyException
+                ? HttpStatusCode.Conflict
+                : HttpStatusCode.InternalServerError;
+
+            context.Response.StatusCode = (int)statusCode;
             context.Response.ContentType = "application/json";
 
             var response = new
             {
-                title = "Internal Server Error",
+                title = statusCode == HttpStatusCode.Conflict
+                    ? "Conflict"
+                    : "Internal Server Error",
                 status = context.Response.StatusCode,
-                detail = "An unexpected error occurred."
+                detail = statusCode == HttpStatusCode.Conflict
+                    ? "The resource was modified by another request. Please refresh and retry."
+                    : "An unexpected error occurred."
             };
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonSerializerOptions));

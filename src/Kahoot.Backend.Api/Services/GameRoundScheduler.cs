@@ -50,6 +50,9 @@ public sealed class GameRoundScheduler(
                     .Group(GameHub.GetGroupName(gamePin))
                     .SendAsync("ShowCorrectAnswer", correctPayload, cts.Token);
 
+                // Oyuncu istemcilerinin result ekranina gecmesi icin kisa gecikme.
+                await Task.Delay(TimeSpan.FromSeconds(3), cts.Token);
+
                 var leaderboardPayload = new ShowLeaderboardEvent
                 {
                     GamePin = gamePin,
@@ -66,7 +69,7 @@ public sealed class GameRoundScheduler(
                 };
 
                 await hubContext.Clients
-                    .Group(GameHub.GetGroupName(gamePin))
+                    .Group(GameHub.GetAdminGroupName(gamePin))
                     .SendAsync("ShowLeaderboard", leaderboardPayload, cts.Token);
 
                 if (finalized.IsGameFinished)

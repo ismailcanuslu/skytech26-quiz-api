@@ -75,6 +75,7 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
             Text = question.Text,
             TimeLimit = question.TimeLimit,
             Points = question.Points,
+            StartedAtUtc = question.StartedAtUtc,
             Options = question.Options.Select(x => new NextQuestionOptionEvent
             {
                 Id = x.Id,
@@ -131,6 +132,7 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
         [FromRoute] string gamePin,
         [FromBody] SubmitAnswerRequest request,
         [FromServices] IGameFlowService gameFlowService,
+        [FromServices] IGameSessionStore gameSessionStore,
         CancellationToken cancellationToken)
     {
         if (!PinRegex.IsMatch(gamePin))
@@ -150,6 +152,16 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
             request.SelectedOptionId,
             request.ElapsedMilliseconds,
             cancellationToken);
+
+        var nickname = User.FindFirstValue("nickname");
+        if (!string.IsNullOrWhiteSpace(nickname))
+        {
+            var banned = await gameSessionStore.IsPlayerBannedAsync(gamePin, nickname, cancellationToken);
+            if (banned)
+            {
+                return Forbid();
+            }
+        }
 
         if (!result.Accepted)
         {
@@ -195,7 +207,7 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
         };
 
         await hubContext.Clients
-            .Group(GameHub.GetGroupName(gamePin))
+            .Group(GameHub.GetAdminGroupName(gamePin))
             .SendAsync("ShowLeaderboard", payload, cancellationToken);
 
         return Ok(payload);
@@ -272,6 +284,12 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
             return NotFound("Game session not found.");
         }
 
+        var banned = await gameSessionStore.IsPlayerBannedAsync(request.GamePin, nickname, cancellationToken);
+        if (banned)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, "You are banned from this game session.");
+        }
+
         var sessionId = Guid.NewGuid().ToString("N");
         var added = await gameSessionStore.TryAddPlayerAsync(request.GamePin, nickname, sessionId, cancellationToken);
         if (!added)
@@ -302,5 +320,53 @@ public sealed class GameSessionController(IGamePinGenerator gamePinGenerator) : 
             AccessToken = token.AccessToken,
             ExpiresAtUtc = token.ExpiresAtUtc
         });
+    }
+
+    [HttpPost("{gamePin}/ban-player")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> BanPlayer(
+        [FromRoute] string gamePin,
+        [FromBody] BanPlayerRequest request,
+        [FromServices] IGameSessionStore gameSessionStore,
+        [FromServices] IHubContext<GameHub> hubContext,
+        CancellationToken cancellationToken)
+    {
+        if (!PinRegex.IsMatch(gamePin))
+        {
+            return BadRequest("Game PIN must be exactly 6 digits.");
+        }
+
+        var nickname = request.Nickname.Trim();
+        if (string.IsNullOrWhiteSpace(nickname))
+        {
+            return BadRequest("Nickname is required.");
+        }
+
+        var sessionExists = await gameSessionStore.SessionExistsAsync(gamePin, cancellationToken);
+        if (!sessionExists)
+        {
+            return NotFound("Game session not found.");
+        }
+
+        var removed = await gameSessionStore.BanPlayerAsync(gamePin, nickname, cancellationToken);
+        if (!removed)
+        {
+            return NotFound("Player not found.");
+        }
+
+        var playerCount = await gameSessionStore.GetPlayerCountAsync(gamePin, cancellationToken);
+        await hubContext.Clients
+            .Group(GameHub.GetGroupName(gamePin))
+            .SendAsync("PlayerRemoved", new PlayerRemovedEvent
+            {
+                GamePin = gamePin,
+                Nickname = nickname,
+                PlayerCount = playerCount
+            }, cancellationToken);
+
+        return NoContent();
     }
 }

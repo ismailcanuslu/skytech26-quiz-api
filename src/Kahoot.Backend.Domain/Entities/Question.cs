@@ -4,6 +4,7 @@ public sealed class Question
 {
     public Guid Id { get; set; }
     public Guid QuizId { get; set; }
+    public int Order { get; set; }
     public string Text { get; set; } = string.Empty;
     public int TimeLimit { get; set; }
     public int Points { get; set; }

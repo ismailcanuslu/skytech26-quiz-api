@@ -36,6 +36,7 @@ public sealed class QuizDetailResponse
 public sealed class QuestionResponse
 {
     public required Guid Id { get; init; }
+    public required int Order { get; init; }
     public required string Text { get; init; }
     public required int TimeLimit { get; init; }
     public required int Points { get; init; }
@@ -73,7 +74,12 @@ public sealed class CreateAnswerOptionRequest
 
 public sealed class UpdateAnswerOptionRequest
 {
-    public Guid? Id { get; init; }
+    public required Guid Id { get; init; }
     public required string Text { get; init; }
     public required bool IsCorrect { get; init; }
+}
+
+public sealed class ReorderQuestionsRequest
+{
+    public required IReadOnlyList<Guid> QuestionIds { get; init; }
 }
