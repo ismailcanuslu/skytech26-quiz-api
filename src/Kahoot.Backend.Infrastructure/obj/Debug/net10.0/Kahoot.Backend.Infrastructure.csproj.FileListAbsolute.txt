@@ -1,0 +1,17 @@
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Infrastructure.deps.json
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Infrastructure.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Infrastructure.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Application.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Domain.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Application.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/bin/Debug/net10.0/Kahoot.Backend.Domain.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.csproj.AssemblyReference.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.AssemblyInfoInputs.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.AssemblyInfo.cs
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.csproj.CoreCompileInputs.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.B.30FAA7EA.Up2Date
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/refint/Kahoot.Backend.Infrastructure.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/Kahoot.Backend.Infrastructure.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Infrastructure/obj/Debug/net10.0/ref/Kahoot.Backend.Infrastructure.dll

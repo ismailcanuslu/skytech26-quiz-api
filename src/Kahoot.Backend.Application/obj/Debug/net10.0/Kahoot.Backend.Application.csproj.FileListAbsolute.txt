@@ -1,0 +1,15 @@
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/bin/Debug/net10.0/Kahoot.Backend.Application.deps.json
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/bin/Debug/net10.0/Kahoot.Backend.Application.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/bin/Debug/net10.0/Kahoot.Backend.Application.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/bin/Debug/net10.0/Kahoot.Backend.Domain.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/bin/Debug/net10.0/Kahoot.Backend.Domain.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.csproj.AssemblyReference.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.AssemblyInfoInputs.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.AssemblyInfo.cs
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.csproj.CoreCompileInputs.cache
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.B.50A39566.Up2Date
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/refint/Kahoot.Backend.Application.dll
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/Kahoot.Backend.Application.pdb
+/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/src/Kahoot.Backend.Application/obj/Debug/net10.0/ref/Kahoot.Backend.Application.dll

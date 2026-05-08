@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "2wtMgoGRins=",
+  "success": true,
+  "projectFilePath": "/Volumes/KIOXIA/etubmt/quizetubackend/kahoot-backend/kahoot-backend/kahoot-backend.csproj",
+  "expectedPackageFiles": [
+    "/Users/ismailcanuslu/.nuget/packages/microsoft.aspnetcore.openapi/10.0.1/microsoft.aspnetcore.openapi.10.0.1.nupkg.sha512",
+    "/Users/ismailcanuslu/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
