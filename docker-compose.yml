@@ -1,0 +1,113 @@
+services:
+  frontend:
+    image: ${FRONTEND_IMAGE_NAME}:${FRONTEND_IMAGE_TAG}
+    build:
+      context: ${FRONTEND_BUILD_CONTEXT}
+      dockerfile: ${FRONTEND_DOCKERFILE}
+    container_name: ${FRONTEND_CONTAINER_NAME}
+    environment:
+      NODE_ENV: ${FRONTEND_NODE_ENV}
+      PORT: ${FRONTEND_INTERNAL_PORT}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.quiz-http.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.quiz-http.entrypoints=web"
+      - "traefik.http.routers.quiz-http.middlewares=quiz-redirect"
+      - "traefik.http.middlewares.quiz-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.quiz-https.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.quiz-https.entrypoints=websecure"
+      - "traefik.http.routers.quiz-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.services.quiz-svc.loadbalancer.server.port=${FRONTEND_INTERNAL_PORT}"
+    networks:
+      - internal-network
+      - proxy-network
+    restart: unless-stopped
+
+  backend:
+    image: ${BACKEND_IMAGE_NAME}:${BACKEND_IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: ${BACKEND_DOCKERFILE}
+    container_name: ${BACKEND_CONTAINER_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${BACKEND_ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: http://+:${BACKEND_INTERNAL_PORT}
+      ConnectionStrings__PostgreSql: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: redis:6379
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      Jwt__AccessTokenExpirationMinutes: ${JWT_ADMIN_EXPIRES_MIN}
+      Jwt__GuestAccessTokenExpirationMinutes: ${JWT_GUEST_EXPIRES_MIN}
+      AdminSeed__Email: ${ADMIN_SEED_EMAIL}
+      AdminSeed__Password: ${ADMIN_SEED_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.quiz-api-http.rule=Host(`${BACKEND_HOST}`)"
+      - "traefik.http.routers.quiz-api-http.entrypoints=web"
+      - "traefik.http.routers.quiz-api-http.middlewares=quiz-api-redirect"
+      - "traefik.http.middlewares.quiz-api-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.quiz-api-https.rule=Host(`${BACKEND_HOST}`)"
+      - "traefik.http.routers.quiz-api-https.entrypoints=websecure"
+      - "traefik.http.routers.quiz-api-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.services.quiz-api-svc.loadbalancer.server.port=${BACKEND_INTERNAL_PORT}"
+    networks:
+      - internal-network
+      - proxy-network
+    restart: unless-stopped
+
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    container_name: ${POSTGRES_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - internal-network
+    restart: unless-stopped
+
+  redis:
+    image: ${REDIS_IMAGE}
+    container_name: ${REDIS_CONTAINER_NAME}
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - internal-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  internal-network:
+    name: ${INTERNAL_NETWORK}
+  proxy-network:
+    external: true
+    name: ${TRAEFIK_NETWORK}
